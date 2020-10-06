@@ -26,6 +26,7 @@
     "@nestjs/platform-express": "^7.0.0",
     "config": "^3.3.2",
     "nestjs-redis": "^1.2.8",
+    "redis": "^3.0.2",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
     "rxjs": "^6.5.4"
