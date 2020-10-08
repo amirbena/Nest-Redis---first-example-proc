@@ -35,6 +35,8 @@ export class RedisPromisfy {
         })
 
     }
+
+
     /**
      * Inserts a new Item to DB, and returns 1 if action in succeed
      * @param provider Represrents the provider of nestjsService- connection to currentDB
@@ -44,16 +46,28 @@ export class RedisPromisfy {
      * 
      * @returns if item has succeed to insert to the hashname
      */
-    public static async insertToItemToDB(provider: IORedis.Redis, hashName: IORedis.KeyType, key: string, value: any) {
+    public static async setOrInsertItemToDB(provider: IORedis.Redis, hashName: IORedis.KeyType, key: string, value: any) {
         const valueStringify = JSON.stringify(value);
         const result = await provider.hset(hashName, key, valueStringify)
         return result > 0;
 
     }
 
-    public static async getItems(provider: IORedis.Redis, hashName: string) {
+    public static async getItems(provider: IORedis.Redis, hashName: string):
+        Promise<Record<string, string>> {
         const items = await provider.hgetall(hashName);
         return items;
+
+    }
+
+    public static async getItemsAndKeys(provider: IORedis.Redis, hashName: string)
+        : Promise<{ items: Record<string, string>, keys: string[] }> {
+        const items = await provider.hgetall(hashName);
+        const keys = Object.keys(items);
+        return {
+            items,
+            keys
+        }
 
     }
 

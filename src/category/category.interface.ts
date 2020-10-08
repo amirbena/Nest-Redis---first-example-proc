@@ -1,3 +1,4 @@
-export default interface Category{
+export default interface ICategory {
     amountToStoreInKg: number;
+    categoryName: string;
 }
