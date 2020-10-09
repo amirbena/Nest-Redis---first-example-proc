@@ -1,11 +1,14 @@
+import { Logger } from '@nestjs/common';
 
 import * as IORedis from 'ioredis';
-import * as async from 'async';
+
 export class RedisPromisfy {
 
+    private static logger = new Logger("RedisPromisify");
     /**
      *  Equilents provider.exists
      */
+
     public static exists(provider: IORedis.Redis, keyName: string): Promise<boolean> {
         return new Promise<boolean>((res, rej) => {
             provider.exists(keyName, (err, reply) => {
@@ -52,14 +55,28 @@ export class RedisPromisfy {
         return result > 0;
 
     }
-
+    /**
+     * 
+     * @param provider  Represrents the provider of nestjsService- connection to currentDB
+     * @param hashName   Represents the collectionName into DB - is exists into DB
+     * 
+     * @returns Items JSON according hash name: keys represents the key of array, value is stringified object
+     */
     public static async getItems(provider: IORedis.Redis, hashName: string):
         Promise<Record<string, string>> {
         const items = await provider.hgetall(hashName);
         return items;
 
     }
-
+    /**
+     * 
+     * @param provider  Represrents the provider of nestjsService- connection to currentDB
+     * @param hashName   Represents the collectionName into DB - is exists into DB 
+     * 
+     * @returns Object that contains 2 elements: Items JSON according hash name: keys represents the key of array, value is stringified object and
+     * keys array of objects 
+     *          
+     */
     public static async getItemsAndKeys(provider: IORedis.Redis, hashName: string)
         : Promise<{ items: Record<string, string>, keys: string[] }> {
         const items = await provider.hgetall(hashName);
@@ -68,6 +85,19 @@ export class RedisPromisfy {
             items,
             keys
         }
+
+    }
+
+    /**
+     * Deletes Keys Array from table into DB
+     * @param provider Represrents the provider of nestjsService- connection to currentDB
+     * @param hashName Represents the collectionName into DB - is exists into DB 
+     * @param keysToDelete Represents keys to delete in string array
+     */
+    public static async deleteItemsAccordingHashName(provider: IORedis.Redis, hashName: string, keysToDelete: string[]):
+        Promise<boolean> {
+        const items = await provider.hdel(hashName, keysToDelete);
+        return items === keysToDelete.length;
 
     }
 

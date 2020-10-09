@@ -1,5 +1,5 @@
 import { UpdateCategoryUpdateDto } from './dto/category-update';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { RedisService } from 'nestjs-redis';
 import * as config from 'config';
 import { Redis } from 'ioredis';
@@ -9,16 +9,19 @@ import { v4 as uuid } from 'uuid';
 import CategoryInterface from './category.interface';
 import { CreateCategoryDto } from './dto/category-insert'
 import { RedisPromisfy } from '../redisPromise/redis-promisfy.promisfy';
-import { stat } from 'fs';
 
 
 @Injectable()
 export class CategoryService {
     private provider: Redis;
+    private logger: Logger = new Logger("CategoryService");
     constructor(
         private categoryProvider: RedisService
     ) {
-        this.provider = this.categoryProvider.getClient(config.get("name"))
+        const dbConfig = config.get("db");
+
+        const name: string = dbConfig["name"];
+        this.provider = this.categoryProvider.getClient(name);
     }
 
 
@@ -27,13 +30,11 @@ export class CategoryService {
             await RedisPromisfy.getItems(this.provider, "categories");
         let found: boolean = false;
         await async.each(items, async item => {
-            if (item.search('{') !== -1) {
-                const category: ICategory = JSON.parse(item);
-                const { categoryName } = category;
-                if (categoryName === name) {
-                    found = true;
-                    return;
-                }
+            const category: ICategory = JSON.parse(item);
+            const { categoryName } = category;
+            if (categoryName === name) {
+                found = true;
+                return;
             }
 
         })
@@ -45,7 +46,7 @@ export class CategoryService {
             const id = uuid();
 
             const ifCategoryNameExists: boolean = await this.ifNameExistsInDB(categoryName);
-            if (!ifCategoryNameExists) return "Same category Name";
+            if (ifCategoryNameExists) return "Same category Name";
             const result = await RedisPromisfy.setOrInsertItemToDB(this.provider, "categories", id, createCategoryDto);
             if (result) {
                 return createCategoryDto;
@@ -100,6 +101,34 @@ export class CategoryService {
         })
         return status;
 
+
+    }
+
+    public async deleteCategoriesByNames(categoryNames: string[]): Promise<boolean> {
+        const ids = []
+        const { items: categoriesRecords, keys: keyRecords } = await RedisPromisfy.getItemsAndKeys(this.provider, "categories");
+        await async.each(categoriesRecords, async categoryRecord => {
+            const category: ICategory = JSON.parse(categoryRecord);
+            if (categoryNames.indexOf(category.categoryName) !== -1) {
+                /**
+                 * @this Finding find if the fited id of all category records
+                 */
+                const id = await async.find(keyRecords, async key => {
+                    const categoryRecord: ICategory = JSON.parse(categoriesRecords[key]);
+                    return categoryRecord.categoryName === category.categoryName;
+                })
+                ids.push(id);
+            }
+        })
+        return await this.deleteCategoriesByIds(ids);
+
+
+
+    }
+
+
+    public async deleteCategoriesByIds(ids: string[]): Promise<boolean> {
+        return await RedisPromisfy.deleteItemsAccordingHashName(this.provider, "categories", ids);
 
     }
 
