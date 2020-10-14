@@ -1,11 +1,11 @@
-import { UpdateCategoryUpdateDto } from './dto/category-update';
+import { UpdateCategoryDto } from './dto/category-update';
 import { Injectable, Logger } from '@nestjs/common';
 import { RedisService } from 'nestjs-redis';
 import * as config from 'config';
 import { Redis } from 'ioredis';
 import ICategory from './category.interface';
 import * as async from 'async';
-import { v4 as uuid } from 'uuid';
+import { v4 as uuid, } from 'uuid';
 import CategoryInterface from './category.interface';
 import { CreateCategoryDto } from './dto/category-insert'
 import { RedisPromisfy } from '../redisPromise/redis-promisfy.promisfy';
@@ -83,7 +83,18 @@ export class CategoryService {
         return foundId;
     }
 
-    public async updateCategory(id: string, updateCategoryDto: UpdateCategoryUpdateDto): Promise<boolean | "Can't update something that not exists"> {
+    public async getCategoryById(id: string): Promise<ICategory> {
+        const { items, keys } = await RedisPromisfy.getItemsAndKeys(this.provider, "categories");
+        let foundCategory: ICategory = null;
+        await async.each(keys, async key => {
+            if (key == id) {
+                foundCategory = JSON.parse(items[key]);
+                return;
+            }
+        })
+        return foundCategory;
+    }
+    public async updateCategory(id: string, updateCategoryDto: UpdateCategoryDto): Promise<boolean | "Can't update something that not exists"> {
         const exists = await RedisPromisfy.existsinHash(this.provider, "categories", id);
         if (!exists) return "Can't update something that not exists"
         const { items, keys } = await RedisPromisfy.getItemsAndKeys(this.provider, "categories")
