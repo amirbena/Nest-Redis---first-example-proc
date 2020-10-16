@@ -1,6 +1,6 @@
-export interface IProduct {
+export interface IDetailedProduct{
     name: string;
     priceForUnit: number;
-    categoryId: string;
+    categoryName: string;
     amountToStore: number;
 }

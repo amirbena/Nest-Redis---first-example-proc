@@ -15,6 +15,7 @@ import { RedisPromisfy } from '../redisPromise/redis-promisfy.promisfy';
 export class CategoryService {
     private provider: Redis;
     private logger: Logger = new Logger("CategoryService");
+    private deletedIds: string[] = [];
     constructor(
         private categoryProvider: RedisService
     ) {
@@ -39,6 +40,18 @@ export class CategoryService {
 
         })
         return found
+    }
+    public async ifCategoryIdExistsInDB(id: string): Promise<boolean> {
+        let isFound = false;
+        const { keys } = await RedisPromisfy.getItemsAndKeys(this.provider, "categories");
+        await async.each(keys, async key => {
+            if (id === key) {
+                isFound = true;
+                return;
+            }
+        })
+        return isFound;
+
     }
     public async createCategory(createCategoryDto: CreateCategoryDto): Promise<CreateCategoryDto | "Same category Name"> {
         const { categoryName } = createCategoryDto;
@@ -67,6 +80,35 @@ export class CategoryService {
         })
         return arr;
 
+    }
+
+    public async getCategoryContentByName(categoryName: string): Promise<ICategory> {
+        const { items, keys } = await RedisPromisfy.getItemsAndKeys(this.provider, "categories");
+        let foundCategory = null;
+        await async.each(keys, async key => {
+            const category: ICategory = JSON.parse(items[key]);
+            const { categoryName: itemCategoryName } = category;
+            if (itemCategoryName == categoryName) {
+                foundCategory = category
+                return;
+            }
+        })
+        return foundCategory;
+    }
+    public async getCategoryObjByName(categoryName: string): Promise<Record<string, ICategory>> {
+        const { items, keys } = await RedisPromisfy.getItemsAndKeys(this.provider, "categories");
+        let foundCategory = null;
+        await async.each(keys, async key => {
+            const category: ICategory = JSON.parse(items[key]);
+            const { categoryName: itemCategoryName } = category;
+            if (itemCategoryName == categoryName) {
+                foundCategory = {
+                    [key]: category
+                }
+                return;
+            }
+        })
+        return foundCategory;
     }
 
     public async getCategoryIdByName(categoryName: string): Promise<string> {
@@ -115,6 +157,8 @@ export class CategoryService {
 
     }
 
+
+    private async
     public async deleteCategoriesByNames(categoryNames: string[]): Promise<boolean> {
         const ids = []
         const { items: categoriesRecords, keys: keyRecords } = await RedisPromisfy.getItemsAndKeys(this.provider, "categories");
@@ -129,16 +173,19 @@ export class CategoryService {
                     return categoryRecord.categoryName === category.categoryName;
                 })
                 ids.push(id);
+
             }
         })
         return await this.deleteCategoriesByIds(ids);
 
-
-
     }
 
+    public getDeletedIds(): string[] {
+        return this.deletedIds;
+    }
 
     public async deleteCategoriesByIds(ids: string[]): Promise<boolean> {
+        this.deletedIds.concat(ids);
         return await RedisPromisfy.deleteItemsAccordingHashName(this.provider, "categories", ids);
 
     }
