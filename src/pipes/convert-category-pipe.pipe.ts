@@ -2,9 +2,9 @@ import { PipeTransform, Injectable, ArgumentMetadata, Logger } from '@nestjs/com
 
 @Injectable()
 export class CategoryAmountPipe implements PipeTransform {
-    private logger= new Logger("categoryAmountPipe");
+    private logger = new Logger("categoryAmountPipe");
     transform(value: any, metadata: ArgumentMetadata) {
-        value.amountToStoreInKg = parseInt(value.amountToStoreInKg);
+        if (value.amountToStoreInKg) value.amountToStoreInKg = parseInt(value.amountToStoreInKg);
         return value;
     }
 }

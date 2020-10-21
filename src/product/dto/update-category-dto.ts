@@ -1,12 +1,13 @@
-import { MinLength, MaxLength, Min, Max, IsNumber } from 'class-validator';
+import { MinLength, MaxLength, Min, Max, IsNumber, IsOptional } from 'class-validator';
 export class UpdateProductDto {
 
-
+    @IsOptional()
     @MinLength(4)
     @MaxLength(255)
     productName: string;
 
 
+    @IsOptional()
     @IsNumber()
     @Min(1)
     @Max(1000)
@@ -14,7 +15,7 @@ export class UpdateProductDto {
     priceForUnit: number;
 
 
-
+    @IsOptional()
     @MinLength(4)
     @MaxLength(255)
 

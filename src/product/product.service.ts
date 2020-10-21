@@ -165,12 +165,6 @@ export class ProductService {
         let result = false;
         let statusFailure = "";
         const { items, keys } = await RedisPromisfy.getItemsAndKeys(this.provider, "products");
-        await async.each(ids, async id => {
-            const index = keys.indexOf(id);
-            if (index !== -1) {
-
-            }
-        })
         result = await RedisPromisfy.deleteItemsAccordingHashName(this.provider, "products", ids);
     }
 

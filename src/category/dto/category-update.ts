@@ -1,12 +1,14 @@
-import { MinLength, MaxLength, Min, Max } from 'class-validator';
+import { MinLength, MaxLength, Min, Max, IsOptional } from 'class-validator';
 
 
 export class UpdateCategoryDto{
+    @IsOptional()
     @MinLength(4)
     @MaxLength(255)
     categoryName: string;
 
+    @IsOptional()
     @Min(0)
-    @Max(10000000)
+    @Max(100000)
     amountToStoreInKg: number;
 }

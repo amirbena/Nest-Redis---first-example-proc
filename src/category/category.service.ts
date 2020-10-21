@@ -137,12 +137,14 @@ export class CategoryService {
         return foundCategory;
     }
     public async updateCategory(id: string, updateCategoryDto: UpdateCategoryDto): Promise<boolean | "Can't update something that not exists"> {
+        
         const exists = await RedisPromisfy.existsinHash(this.provider, "categories", id);
         if (!exists) return "Can't update something that not exists"
         const { items, keys } = await RedisPromisfy.getItemsAndKeys(this.provider, "categories")
         let status: boolean = false;
         await async.each(keys, async key => {
             if (key === id) {
+                this.logger.log(updateCategoryDto);
                 let category: ICategory = JSON.parse(items[key]);
                 const { categoryName: updatedCategoryName, amountToStoreInKg: updatedAmount } = updateCategoryDto;
                 if (updatedCategoryName) category.categoryName = updatedCategoryName;
@@ -158,7 +160,6 @@ export class CategoryService {
     }
 
 
-    private async
     public async deleteCategoriesByNames(categoryNames: string[]): Promise<boolean> {
         const ids = []
         const { items: categoriesRecords, keys: keyRecords } = await RedisPromisfy.getItemsAndKeys(this.provider, "categories");

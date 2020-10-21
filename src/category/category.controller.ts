@@ -5,6 +5,7 @@ import { Controller, Get, Post, UsePipes, ValidationPipe, Body, HttpCode, HttpSt
 import ICategory from './category.interface';
 import { CategoryAmountPipe } from 'src/pipes/convert-category-pipe.pipe';
 import { UpdateCategoryDto } from './dto/category-update';
+import { throws } from 'assert';
 
 @Controller('categories')
 export class CategoryController {
@@ -26,9 +27,11 @@ export class CategoryController {
         @Body() createCategoryDto: CreateCategoryDto,
         @Res() res: Response
     ) {
+        this.logger.log(createCategoryDto.categoryName);
         const result = await this.categoryService.createCategory(createCategoryDto);
         if (result === "Same category Name") return res.status(HttpStatus.CONFLICT).send(result);
-        return "item created"
+        this.logger.log(result);
+        return res.status(HttpStatus.CREATED).send("Item created");
     }
 
     @Get("/:id")
@@ -36,41 +39,44 @@ export class CategoryController {
         @Param('id') id: string,
         @Res() res: Response
     ) {
+        this.logger.log(id)
         const result = await this.categoryService.getCategoryById(id);
         if (!result) return res.status(HttpStatus.NOT_FOUND).send("No Category Found");
-        return result;
+        return res.send(result);
     }
 
     @Patch('/:id')
-    @UsePipes(ValidationPipe)
+    @UsePipes(CategoryAmountPipe, ValidationPipe)
     async updateCategoryById(
         @Param('id') id: string,
-        @Body('status') updateCategoryDto: UpdateCategoryDto,
+        @Body() updateCategoryDto: UpdateCategoryDto,
         @Res() res: Response
     ) {
+        this.logger.log("Update category dto")
         const result = await this.categoryService.updateCategory(id, updateCategoryDto);
         if (result === "Can't update something that not exists") res.status(HttpStatus.NOT_FOUND).send(result);
-        return `${id} isUpdated : true`
+        return res.send(`${id} isUpdated : true`);
     }
 
 
     @Delete('ids/:ids')
     async DeleteCategoriesByIds(
-        @Param('ids') ids: string[],
+        @Body('ids') ids: string[],
         @Res() res: Response
     ) {
-        const result= await this.categoryService.deleteCategoriesByIds(ids);
-        if(!result) return res.status(HttpStatus.NOT_FOUND).send("Something failed in deleting id");
-        return "Delete all succeed";
+        this.logger.log(ids);
+        const result = await this.categoryService.deleteCategoriesByIds(ids);
+        if (!result) return res.status(HttpStatus.NOT_FOUND).send("Something failed in deleting id");
+        return res.send("Delete all succeed");
     }
 
     @Delete("names/:names")
     async DeleteCategoriesByNames(
-        @Param('names') names: string[],
+        @Body('names') names: string[],
         @Res() res: Response
-    ){
-        const result= await this.categoryService.deleteCategoriesByNames(names);
-        if(!result) return res.status(HttpStatus.NOT_FOUND).send("Something failed in deleting id");
-        return "Delete all succeed";
+    ) {
+        const result = await this.categoryService.deleteCategoriesByNames(names);
+        if (!result) return res.status(HttpStatus.NOT_FOUND).send("Something failed in deleting id");
+        return res.send("Delete all succeed");
     }
 }
