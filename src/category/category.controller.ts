@@ -38,7 +38,7 @@ export class CategoryController {
     async getCategoryById(
         @Param('id') id: string,
         @Res() res: Response
-    ) {
+    ): Promise<Response<ICategory>> {
         this.logger.log(id)
         const result = await this.categoryService.getCategoryById(id);
         if (!result) return res.status(HttpStatus.NOT_FOUND).send("No Category Found");
@@ -51,11 +51,11 @@ export class CategoryController {
         @Param('id') id: string,
         @Body() updateCategoryDto: UpdateCategoryDto,
         @Res() res: Response
-    ) {
+    ): Promise<Response<string>> {
         this.logger.log("Update category dto")
         const result = await this.categoryService.updateCategory(id, updateCategoryDto);
         if (result === "Can't update something that not exists") res.status(HttpStatus.NOT_FOUND).send(result);
-        return res.send(`${id} isUpdated : true`);
+        return res.send(`${id} isUpdated : ${result}`);
     }
 
 
@@ -63,7 +63,7 @@ export class CategoryController {
     async DeleteCategoriesByIds(
         @Body('ids') ids: string[],
         @Res() res: Response
-    ) {
+    ): Promise<Response<string>> {
         this.logger.log(ids);
         const result = await this.categoryService.deleteCategoriesByIds(ids);
         if (!result) return res.status(HttpStatus.NOT_FOUND).send("Something failed in deleting id");
@@ -74,7 +74,7 @@ export class CategoryController {
     async DeleteCategoriesByNames(
         @Body('names') names: string[],
         @Res() res: Response
-    ) {
+    ): Promise<Response<string>> {
         const result = await this.categoryService.deleteCategoriesByNames(names);
         if (!result) return res.status(HttpStatus.NOT_FOUND).send("Something failed in deleting id");
         return res.send("Delete all succeed");

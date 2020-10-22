@@ -105,7 +105,7 @@ export class CategoryService {
                 foundCategory = {
                     [key]: category
                 }
-                return;
+                 return;
             }
         })
         return foundCategory;
@@ -131,6 +131,7 @@ export class CategoryService {
         await async.each(keys, async key => {
             if (key == id) {
                 foundCategory = JSON.parse(items[key]);
+                this.logger.log(foundCategory);
                 return;
             }
         })
@@ -144,7 +145,6 @@ export class CategoryService {
         let status: boolean = false;
         await async.each(keys, async key => {
             if (key === id) {
-                this.logger.log(updateCategoryDto);
                 let category: ICategory = JSON.parse(items[key]);
                 const { categoryName: updatedCategoryName, amountToStoreInKg: updatedAmount } = updateCategoryDto;
                 if (updatedCategoryName) category.categoryName = updatedCategoryName;

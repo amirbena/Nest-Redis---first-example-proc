@@ -14,10 +14,11 @@ import async from 'async';
 import ICategory from 'src/category/category.interface';
 
 
+
 @Injectable()
 export class ProductService {
     private provider: Redis;
-    private logger = new Logger("ProductSerivce");
+    private logger = new Logger("ProductService");
     private categoryService: CategoryService;
     constructor(
         productProvider: RedisService,
@@ -69,14 +70,15 @@ export class ProductService {
     }
     public async createProduct(createProductDto: CreateProductDto): Promise<IProduct | "Category isn't found into DB"
         | "Same product in same category" | "Amount of entered category is bigger than capcity amount"> {
-        const { categoryName, priceForUnit, productName, amountToStoreInKg } = createProductDto;
 
+
+        const { categoryName, priceForUnit, productName, amountToStoreInKg } = createProductDto;
         const categoryObj = await this.categoryService.getCategoryObjByName(categoryName);
+
         if (!categoryObj) { await this.destroyAllNotAssociatedProudcts(); return "Category isn't found into DB"; }
 
         const categoryId = Object.keys(categoryObj)[0];
-        const { foundCategory } = categoryObj;
-
+        const foundCategory = categoryObj[categoryId];
 
 
         const isFound = await this.isProductHasFoundIntoDB(productName, categoryId);
@@ -87,7 +89,7 @@ export class ProductService {
             name: categoryName,
             priceForUnit,
             categoryId,
-            amountToStore: amountToStoreInKg
+            amountToStoreInKg
         }
         const result = await RedisPromisfy.setOrInsertItemToDB(this.provider, "products", id, product);
         if (result) {
@@ -113,13 +115,14 @@ export class ProductService {
         const object = await RedisPromisfy.getItemsAndKeys(this.provider, "products");
         const products = [];
         await async.each(object.keys, async key => {
+            this.logger.log(object.items[key]);
             const product: IProduct = JSON.parse(object.items[key]);
             const category = await this.categoryService.getCategoryById(product.categoryId);
             if (!category) { object.items = await this.destroyAllNotAssociatedProudcts(); }
             const detailedProduct: IDetailedProduct = {
                 categoryName: category.categoryName,
                 name: product.name,
-                amountToStore: product.amountToStore,
+                amountToStoreInKg: product.amountToStoreInKg,
                 priceForUnit: product.priceForUnit
             }
             products.push({
@@ -134,6 +137,8 @@ export class ProductService {
         if (!exists) return "Can't update something that not exists";
         let textFailure = "";
         const itemsAndKeys = await RedisPromisfy.getItemsAndKeys(this.provider, "products")
+        this.logger.log(id);
+        this.logger.log(updateProductDto);
         let status: boolean = false;
         await async.each(itemsAndKeys.keys, async key => {
             if (key === id) {
@@ -144,9 +149,9 @@ export class ProductService {
                     textFailure = "Category Is not Found"; return
                 }
                 const { amountToStoreInKg, priceForUnit, productName } = updateProductDto;
-                if (amountToStoreInKg && amountToStoreInKg > product.amountToStore) { textFailure = "Can't update- change amount"; return; }
+                if (amountToStoreInKg && amountToStoreInKg > product.amountToStoreInKg) { textFailure = "Can't update- change amount"; return; }
                 else {
-                    product.amountToStore = amountToStoreInKg;
+                    product.amountToStoreInKg = amountToStoreInKg;
                     category.amountToStoreInKg -= amountToStoreInKg;
                     await this.categoryService.updateCategory(product.categoryId, category);
                 }

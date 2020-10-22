@@ -26,7 +26,7 @@ export class CreateProductDto {
     @IsNotEmpty()
     @IsNumber()
     @Min(1)
-    @Max(5000000)
+    @Max(50000)
 
     amountToStoreInKg: number;
 }
