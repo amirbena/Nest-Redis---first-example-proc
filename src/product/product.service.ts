@@ -1,5 +1,4 @@
 import { UpdateProductDto } from './dto/update-category-dto';
-import { UpdateCategoryDto } from './../category/dto/category-update';
 import { IDetailedProduct } from './product.detailed.interface';
 import { RedisPromisfy } from './../redisPromise/redis-promisfy.promisfy';
 import { CreateProductDto } from './dto/create-product-dto';
@@ -86,7 +85,7 @@ export class ProductService {
         if (foundCategory.amountToStoreInKg < amountToStoreInKg) return "Amount of entered category is bigger than capcity amount"
         const id = uuid();
         const product: IProduct = {
-            name: categoryName,
+            name: productName,
             priceForUnit,
             categoryId,
             amountToStoreInKg
@@ -165,13 +164,31 @@ export class ProductService {
         return textFailure !== "" ? textFailure : status
     }
 
-
-    public async deleteProductsByIds(ids: string[]) {
-        let result = false;
-        let statusFailure = "";
-        const { items, keys } = await RedisPromisfy.getItemsAndKeys(this.provider, "products");
-        result = await RedisPromisfy.deleteItemsAccordingHashName(this.provider, "products", ids);
+    public async getProductById(id: string): Promise<IProduct> {
+        let foundProduct: IProduct = null;
+        const productString = await RedisPromisfy.getItemByKey(this.provider, "products", id);
+        if (productString !== "" && productString !== "nill") foundProduct = JSON.parse(productString);
+        return foundProduct
     }
+
+
+    public async deleteProductsByIds(ids: string[]): Promise<number> {
+        let countDeleted: number = 0;
+        const { items, keys } = await RedisPromisfy.getItemsAndKeys(this.provider, "products");
+        await async.each(keys, async key => {
+            if (ids.indexOf(key) !== -1) {
+                countDeleted += 1;
+                const product: IProduct = JSON.parse(items[key]);
+                const category: ICategory = await this.categoryService.getCategoryById(product.categoryId);
+                if (!category) return;
+                category.amountToStoreInKg += product.amountToStoreInKg;
+                await this.categoryService.updateCategory(product.categoryId, category);
+            }
+        })
+        await RedisPromisfy.deleteItemsAccordingHashName(this.provider, "products", ids);
+        return countDeleted;
+    }
+
 
 
 
