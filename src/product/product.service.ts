@@ -10,8 +10,9 @@ import { RedisService } from 'nestjs-redis';
 import * as config from 'config';
 import { v4 as uuid } from 'uuid';
 import async from 'async';
-import ICategory from 'src/category/category.interface';
 
+import ICategory from 'src/category/category.interface';
+import { TABLE_NAMES } from 'src/tableNames/names.table';
 
 
 @Injectable()
@@ -30,7 +31,7 @@ export class ProductService {
     }
     private async isProductHasFoundIntoDB(productName: string, categoryId: string): Promise<boolean> {
         let isFound = false;
-        const items = await RedisPromisfy.getItems(this.provider, "products");
+        const items = await RedisPromisfy.getItems(this.provider, TABLE_NAMES.PRODUCTS);
         await async.each(items, async item => {
             const product: IProduct = JSON.parse(item);
             const { name, categoryId: itemCategory } = product;
@@ -43,7 +44,7 @@ export class ProductService {
     }
     private async destroyAllNotAssociatedProudcts(items = {}, keys = []): Promise<Record<string, string>> {
         if (!Object.keys(items).length) {
-            const newItems = await RedisPromisfy.getItems(this.provider, "products");
+            const newItems = await RedisPromisfy.getItems(this.provider, TABLE_NAMES.PRODUCTS);
             items = newItems;
             if (!keys.length) keys = Object.keys(newItems);
         }
@@ -58,7 +59,7 @@ export class ProductService {
             }
         })
         if (!ids.length) return items;
-        await RedisPromisfy.deleteItemsAccordingHashName(this.provider, "products", ids);
+        await RedisPromisfy.deleteItemsAccordingHashName(this.provider, TABLE_NAMES.PRODUCTS, ids);
         const newItems = {};
         await async.each(keys, async key => {
             if (!categoryKeys.includes(key)) {
@@ -90,7 +91,7 @@ export class ProductService {
             categoryId,
             amountToStoreInKg
         }
-        const result = await RedisPromisfy.setOrInsertItemToDB(this.provider, "products", id, product);
+        const result = await RedisPromisfy.setOrInsertItemToDB(this.provider, TABLE_NAMES.PRODUCTS, id, product);
         if (result) {
             foundCategory.amountToStoreInKg = foundCategory.amountToStoreInKg - amountToStoreInKg;
             await this.categoryService.updateCategory(categoryId, foundCategory);
@@ -99,7 +100,7 @@ export class ProductService {
     }
 
     public async getProducts(): Promise<Record<string, IProduct>[]> {
-        const { items, keys } = await RedisPromisfy.getItemsAndKeys(this.provider, "products");
+        const { items, keys } = await RedisPromisfy.getItemsAndKeys(this.provider, TABLE_NAMES.PRODUCTS);
         const products = [];
         await async.each(keys, async key => {
             const newItem: IProduct = JSON.parse(items[key]);
@@ -111,7 +112,7 @@ export class ProductService {
     }
 
     public async getDetailedProducts(): Promise<Record<string, IDetailedProduct>[]> {
-        const object = await RedisPromisfy.getItemsAndKeys(this.provider, "products");
+        const object = await RedisPromisfy.getItemsAndKeys(this.provider, TABLE_NAMES.PRODUCTS);
         const products = [];
         await async.each(object.keys, async key => {
             this.logger.log(object.items[key]);
@@ -132,10 +133,10 @@ export class ProductService {
     }
 
     public async updateProduct(id: string, updateProductDto: UpdateProductDto): Promise<string | boolean> {
-        const exists = await RedisPromisfy.existsinHash(this.provider, "products", id);
+        const exists = await RedisPromisfy.existsinHash(this.provider, TABLE_NAMES.PRODUCTS, id);
         if (!exists) return "Can't update something that not exists";
         let textFailure = "";
-        const itemsAndKeys = await RedisPromisfy.getItemsAndKeys(this.provider, "products")
+        const itemsAndKeys = await RedisPromisfy.getItemsAndKeys(this.provider, TABLE_NAMES.PRODUCTS)
         this.logger.log(id);
         this.logger.log(updateProductDto);
         let status: boolean = false;
@@ -157,7 +158,7 @@ export class ProductService {
                 if (priceForUnit) product.priceForUnit = priceForUnit;
                 if (productName) product.name = productName;
 
-                status = await RedisPromisfy.setOrInsertItemToDB(this.provider, "products", id, product);
+                status = await RedisPromisfy.setOrInsertItemToDB(this.provider, TABLE_NAMES.PRODUCTS, id, product);
                 return
             }
         })
@@ -166,7 +167,7 @@ export class ProductService {
 
     public async getProductById(id: string): Promise<IProduct> {
         let foundProduct: IProduct = null;
-        const productString = await RedisPromisfy.getItemByKey(this.provider, "products", id);
+        const productString = await RedisPromisfy.getItemByKey(this.provider, TABLE_NAMES.PRODUCTS, id);
         if (productString !== "" && productString !== "nill") foundProduct = JSON.parse(productString);
         return foundProduct
     }
@@ -174,7 +175,7 @@ export class ProductService {
 
     public async deleteProductsByIds(ids: string[]): Promise<number> {
         let countDeleted: number = 0;
-        const { items, keys } = await RedisPromisfy.getItemsAndKeys(this.provider, "products");
+        const { items, keys } = await RedisPromisfy.getItemsAndKeys(this.provider, TABLE_NAMES.PRODUCTS);
         await async.each(keys, async key => {
             if (ids.indexOf(key) !== -1) {
                 countDeleted += 1;
@@ -185,7 +186,7 @@ export class ProductService {
                 await this.categoryService.updateCategory(product.categoryId, category);
             }
         })
-        await RedisPromisfy.deleteItemsAccordingHashName(this.provider, "products", ids);
+        await RedisPromisfy.deleteItemsAccordingHashName(this.provider, TABLE_NAMES.PRODUCTS, ids);
         return countDeleted;
     }
 
