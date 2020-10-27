@@ -1,4 +1,4 @@
-import { IsNotEmpty, MinLength, MaxLength, IsString } from 'class-validator';
+import { IsNotEmpty, MinLength, MaxLength, IsString, IsBooleanString } from 'class-validator';
 
 
 export class AuthCrediantls{
@@ -6,7 +6,7 @@ export class AuthCrediantls{
     @IsNotEmpty()
     @IsString()
     @MinLength(8)
-    @MaxLength(16)
+    @MaxLength(100)
     email: string;
 
     @IsNotEmpty()
@@ -14,4 +14,5 @@ export class AuthCrediantls{
     @MinLength(6)
     @MaxLength(25)
     password: string;
+
 }

@@ -24,16 +24,17 @@ export class UserService {
     }
 
     public async createUser(createUserDto: CreateUserDto)
-        : Promise<"Email is exist for other user" | boolean> {
+        : Promise<string> {
         const id = uuid();
         const { email, address, fullName } = createUserDto;
+        const isAdmin = createUserDto.isAdmin === "true";
         let found = false;
         const items = await RedisPromisfy.getItems(this.provider, TABLE_NAMES.USERS);
         await async.each(items, async item => {
             const user: IUser = JSON.parse(item);
             if (user.email === email) { found = true; return; }
         })
-        if (!found) return "Email is exist for other user";
+        if (found) return "Email is exist for other user";
         const salt = await bcrypt.genSalt();
         const password = await bcrypt.hash(createUserDto.password, salt);
         const user: IUser = {
@@ -41,9 +42,23 @@ export class UserService {
             address,
             fullName,
             salt,
-            password
+            password,
+            isAdmin
         }
-        const res = await RedisPromisfy.setOrInsertItemToDB(this.provider, TABLE_NAMES.USERS, id, user);
-        return res;
+        await RedisPromisfy.setOrInsertItemToDB(this.provider, TABLE_NAMES.USERS, id, user);
+        return password;
+    }
+
+    public async getUserByEmail(email: string): Promise<IUser> {
+        let foundUser: IUser = null;
+        const items = await RedisPromisfy.getItems(this.provider, TABLE_NAMES.USERS);
+        await async.each(items, async item => {
+            const user: IUser = JSON.parse(item);
+            if (user.email === email) {
+                foundUser = user;
+                return;
+            }
+        })
+        return foundUser;
     }
 }

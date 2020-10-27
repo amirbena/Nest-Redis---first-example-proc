@@ -5,7 +5,7 @@ import { Controller, Get, Post, UsePipes, ValidationPipe, Body, HttpCode, HttpSt
 import ICategory from './category.interface';
 import { CategoryAmountPipe } from 'src/pipes/convert-category-pipe.pipe';
 import { UpdateCategoryDto } from './dto/category-update';
-import { throws } from 'assert';
+
 
 @Controller('categories')
 export class CategoryController {

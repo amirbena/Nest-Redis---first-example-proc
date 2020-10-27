@@ -3,6 +3,7 @@ export interface IUser {
     password: string;
     fullName: string;
     salt: string;
+    isAdmin: boolean
     address: {
         building: number;
         city: string;

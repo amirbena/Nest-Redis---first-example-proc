@@ -1,4 +1,8 @@
-import { IsNotEmpty, IsString, MinLength, MaxLength, IsObject, IsEmail, IsNumber, Min, Max, IsNumberString, Length } from 'class-validator';
+import {
+    IsNotEmpty, IsString, MinLength, MaxLength,
+    IsObject, IsEmail, IsNumber, Min, Max, IsNumberString,
+    IsBooleanString
+} from 'class-validator';
 
 class AddressDto {
     @IsNotEmpty()
@@ -31,7 +35,7 @@ export class CreateUserDto {
     @IsNotEmpty()
     @IsEmail()
     @MinLength(8)
-    @MaxLength(16)
+    @MaxLength(100)
     email: string;
 
     @IsNotEmpty()
@@ -48,6 +52,10 @@ export class CreateUserDto {
     @IsNotEmpty()
     @IsObject()
     address: AddressDto
+
+    @IsNotEmpty()
+    @IsBooleanString()
+    isAdmin: string;
 
 
 
