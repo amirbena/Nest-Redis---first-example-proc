@@ -25,7 +25,9 @@ export class AuthService {
         return await this.genToken(payload);
     }
     private async genToken(payload: JwtPayload): Promise<string> {
-        const accessToken = await this.jwtService.signAsync(payload);
+        const accessToken = await this.jwtService.signAsync(payload,{
+
+        });
         return accessToken;
 
     }
@@ -44,5 +46,9 @@ export class AuthService {
 
         return await this.genToken(payload);
 
+    }
+
+    public getJwtService(): JwtService {
+        return this.jwtService;
     }
 }

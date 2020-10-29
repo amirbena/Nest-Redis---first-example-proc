@@ -4,8 +4,8 @@ import { Strategy, ExtractJwt } from 'passport-jwt';
 import * as config from 'config';
 
 @Injectable()
-export class JwtStartegy extends PassportStrategy(Strategy,"jwt") {
-    private logger: Logger = new Logger("JwtStartegy");
+export class AdminStartegy extends PassportStrategy(Strategy,"admin") {
+    private logger: Logger = new Logger("AdminStartegy");
     constructor() {
         super({
             jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -14,11 +14,15 @@ export class JwtStartegy extends PassportStrategy(Strategy,"jwt") {
     }
     async validate(payload: any) {
         const { password, email, isAdmin } = payload;
-        return {
-             password,
-             email,
-             isAdmin
+        this.logger.log(isAdmin);
+        if(isAdmin){
+            return {
+                password,
+                email,
+                isAdmin
+           }
         }
+        return false;
     }
 
 }

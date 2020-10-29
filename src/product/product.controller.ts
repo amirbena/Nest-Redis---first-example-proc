@@ -4,11 +4,13 @@ import { CreateProductDto } from './dto/create-product-dto';
 import { ConvertProductPriceForUnit } from './../pipes/convert-product-pipe.pipe';
 import { ProductService } from './product.service';
 
-import { Controller, Logger, Get, Post, UsePipes, ValidationPipe, HttpCode, HttpStatus, Body, Res, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Logger, Get, Post, UsePipes, ValidationPipe, HttpCode, HttpStatus, Body, Res, Patch, Param, Delete, UseGuards } from '@nestjs/common';
 import { IProduct } from './product.interface';
 import { IDetailedProduct } from './product.detailed.interface';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('products')
+@UseGuards(AuthGuard("jwt"))
 export class ProductController {
     private logger: Logger = new Logger("ProductController");
     constructor(
@@ -23,6 +25,7 @@ export class ProductController {
 
     @Post()
     @UsePipes(ConvertProductPriceForUnit, ValidationPipe)
+    @UseGuards(AuthGuard("admin"))
     @HttpCode(HttpStatus.CREATED)
     async createProduct(
         @Body() createProductDto: CreateProductDto,
@@ -55,6 +58,7 @@ export class ProductController {
     }
 
     @Patch("/:id")
+    @UseGuards(AuthGuard("admin"))
     async updateProduct(
         @Param("id") id: string,
         @Body() updateProductDto: UpdateProductDto,
@@ -78,6 +82,7 @@ export class ProductController {
     }
 
     @Delete()
+    @UseGuards(AuthGuard("admin"))
     async deleteProductsByIds(
         @Body("ids") ids: string[]
     ) {
@@ -93,9 +98,6 @@ export class ProductController {
         if (!product) return res.status(HttpStatus.NOT_FOUND).send("Product not found by ID");
         res.send(product);
     }
-
-
-    
 
 }
 

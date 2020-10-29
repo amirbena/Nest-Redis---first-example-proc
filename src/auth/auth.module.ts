@@ -1,10 +1,11 @@
+import { AdminStartegy } from './../adminStrategy';
 import { JwtStartegy } from './../jwtStrategy';
 import { UserModule } from './../user/user.module';
 import { Module } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport'
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
-import { JwtModule } from '@nestjs/jwt';
+import { JwtModule} from '@nestjs/jwt';
 import * as config from 'config';
 
 const jwtConfig= config.get('jwt');
@@ -16,13 +17,13 @@ const jwtConfig= config.get('jwt');
     JwtModule.register({
       secret: process.env.JWT_SECRET || jwtConfig["secret"],
       signOptions: {
-        expiresIn: jwtConfig["expiresIn"],
+        expiresIn: jwtConfig["expiresIn"]
       }
     })
 
   ],
-  providers: [AuthService,JwtStartegy],
+  providers: [AuthService,JwtStartegy,AdminStartegy],
   controllers: [AuthController],
-  exports: [JwtStartegy,PassportModule]
+  exports: [AuthService]
 })
 export class AuthModule { }

@@ -1,17 +1,19 @@
 import { CreateCategoryDto } from './dto/category-insert';
 import { CategoryService } from './category.service';
 import { Response } from 'express';
-import { Controller, Get, Post, UsePipes, ValidationPipe, Body, HttpCode, HttpStatus, Logger, Res, Param, Patch, Delete } from '@nestjs/common';
+import { Controller, Get, Post, UsePipes, ValidationPipe, Body, HttpCode, HttpStatus, Logger, Res, Param, Patch, Delete, UseGuards } from '@nestjs/common';
 import ICategory from './category.interface';
 import { CategoryAmountPipe } from 'src/pipes/convert-category-pipe.pipe';
 import { UpdateCategoryDto } from './dto/category-update';
+import { AuthGuard } from '@nestjs/passport';
 
 
 @Controller('categories')
+@UseGuards(AuthGuard('jwt'))
 export class CategoryController {
     private logger = new Logger("CategoryController");
     constructor(
-        private categoryService: CategoryService
+        private categoryService: CategoryService,
     ) { }
 
     @Get()
@@ -20,6 +22,7 @@ export class CategoryController {
     }
 
     @Post()
+    @UseGuards(AuthGuard("admin"))
     @UsePipes(CategoryAmountPipe, ValidationPipe)
     @HttpCode(HttpStatus.CREATED)
     async createCategory(
@@ -46,6 +49,7 @@ export class CategoryController {
     }
 
     @Patch('/:id')
+    @UseGuards(AuthGuard("admin"))
     @UsePipes(CategoryAmountPipe, ValidationPipe)
     async updateCategoryById(
         @Param('id') id: string,
@@ -60,6 +64,7 @@ export class CategoryController {
 
 
     @Delete('ids/:ids')
+    @UseGuards(AuthGuard("admin"))
     async DeleteCategoriesByIds(
         @Body('ids') ids: string[],
         @Res() res: Response
