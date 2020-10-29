@@ -101,12 +101,11 @@ export class ProductService {
 
     public async getProducts(): Promise<Record<string, IProduct>[]> {
         const { items, keys } = await RedisPromisfy.getItemsAndKeys(this.provider, TABLE_NAMES.PRODUCTS);
-        const products = [];
-        await async.each(keys, async key => {
+        const products: Record<string, IProduct>[] = await async.map(keys, async key => {
             const newItem: IProduct = JSON.parse(items[key]);
-            products.push({
+            return {
                 [key]: newItem
-            })
+            }
         })
         return products;
     }

@@ -61,4 +61,16 @@ export class UserService {
         })
         return foundUser;
     }
+
+    public async getAllUsers():Promise<Record<string, IUser>[]> {
+        const { items, keys } = await RedisPromisfy.getItemsAndKeys(this.provider, TABLE_NAMES.USERS);
+        const users: Record<string, IUser>[] = await async.map(keys, async  key => {
+            const user: IUser = JSON.parse(items[key]);
+            return {
+                [key]: user
+            }
+        })
+        return users;
+    }
+
 }

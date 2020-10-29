@@ -10,7 +10,7 @@ import CategoryInterface from './category.interface';
 import { CreateCategoryDto } from './dto/category-insert'
 import { RedisPromisfy } from '../redisPromise/redis-promisfy.promisfy';
 import { TABLE_NAMES } from 'src/tableNames/names.table';
- 
+
 @Injectable()
 export class CategoryService {
     private provider: Redis;
@@ -71,15 +71,13 @@ export class CategoryService {
     }
     public async getCategories(): Promise<Record<string, CategoryInterface>[]> {
         const { items, keys } = await RedisPromisfy.getItemsAndKeys(this.provider, TABLE_NAMES.CATEGORIES);
-        const arr: Record<string, CategoryInterface>[] = [];
-        await async.each(keys, async key => {
+        const categories: Record<string, CategoryInterface>[] = await async.map(keys, async key => {
             const newValue: CategoryInterface = JSON.parse(items[key]);
-            arr.push({
+            return {
                 [key]: newValue
-            })
+            }
         })
-        return arr;
-
+        return categories;
     }
 
     public async getCategoryContentByName(categoryName: string): Promise<ICategory> {
