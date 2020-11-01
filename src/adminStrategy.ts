@@ -1,10 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, ExtractJwt } from 'passport-jwt';
 import * as config from 'config';
 
 @Injectable()
-export class AdminStartegy extends PassportStrategy(Strategy,"admin") {
+export class AdminStartegy extends PassportStrategy(Strategy, "admin") {
     private logger: Logger = new Logger("AdminStartegy");
     constructor() {
         super({
@@ -15,14 +15,14 @@ export class AdminStartegy extends PassportStrategy(Strategy,"admin") {
     async validate(payload: any) {
         const { password, email, isAdmin } = payload;
         this.logger.log(isAdmin);
-        if(isAdmin){
+        if (isAdmin) {
             return {
                 password,
                 email,
                 isAdmin
-           }
+            }
         }
-        return false;
+        throw new HttpException("Current User not admin", HttpStatus.FORBIDDEN);
     }
 
 }

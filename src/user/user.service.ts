@@ -1,3 +1,5 @@
+
+import { UpdateUserDto } from './dto/user-upadte';
 import { IUser } from './user.interface';
 import { RedisPromisfy } from './../redisPromise/redis-promisfy.promisfy';
 import { CreateUserDto } from './dto/create-user';
@@ -62,7 +64,7 @@ export class UserService {
         return foundUser;
     }
 
-    public async getAllUsers():Promise<Record<string, IUser>[]> {
+    public async getAllUsers(): Promise<Record<string, IUser>[]> {
         const { items, keys } = await RedisPromisfy.getItemsAndKeys(this.provider, TABLE_NAMES.USERS);
         const users: Record<string, IUser>[] = await async.map(keys, async  key => {
             const user: IUser = JSON.parse(items[key]);
@@ -73,4 +75,23 @@ export class UserService {
         return users;
     }
 
+    public async updateUserDetails(id: string, updateUserDto: UpdateUserDto): Promise<string | boolean> {
+        const exists = await RedisPromisfy.existsinHash(this.provider, TABLE_NAMES.USERS, id);
+        if (!exists) return "Can't update something that not exists";
+        let textFailure = "";
+        const { keys, items } = await RedisPromisfy.getItemsAndKeys(this.provider, TABLE_NAMES.USERS)
+
+        let status: boolean = false;
+        await async.each(keys, async key => {
+            if (key === id) {
+                let user: IUser = JSON.parse(items[key]);
+                for (let key in Object.keys(updateUserDto)) {
+                    user[key] = updateUserDto[key];
+                }
+                status = await RedisPromisfy.setOrInsertItemToDB(this.provider, TABLE_NAMES.USERS, id, user);
+                return
+            }
+        })
+        return textFailure !== "" ? textFailure : status
+    }
 }
