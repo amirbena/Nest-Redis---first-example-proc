@@ -5,6 +5,7 @@ import { UserService } from './../user/user.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt'
 import * as bcrypt from 'bcrypt';
+import { Role } from 'src/enums/enums';
 
 @Injectable()
 export class AuthService {
@@ -20,12 +21,12 @@ export class AuthService {
         const payload: JwtPayload = {
             email: createUserDto.email,
             password: result,
-            isAdmin: createUserDto.isAdmin === "true"
+            role: Role.USER
         }
         return await this.genToken(payload);
     }
     private async genToken(payload: JwtPayload): Promise<string> {
-        const accessToken = await this.jwtService.signAsync(payload,{
+        const accessToken = await this.jwtService.signAsync(payload, {
 
         });
         return accessToken;
@@ -41,14 +42,15 @@ export class AuthService {
         const payload: JwtPayload = {
             email,
             password: user.password,
-            isAdmin: user.isAdmin
+            role: user.role
         }
 
         return await this.genToken(payload);
 
     }
 
-    public getJwtService(): JwtService {
-        return this.jwtService;
+    public decodeJwt(token: string): JwtPayload {
+        const decode: JwtPayload = this.jwtService.verify(token)
+        return decode;
     }
 }

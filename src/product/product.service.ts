@@ -1,6 +1,7 @@
+import { TABLE_NAMES } from './../enums/enums';
 import { UpdateProductDto } from './dto/update-category-dto';
 import { IDetailedProduct } from './product.detailed.interface';
-import { RedisPromisfy } from './../redisPromise/redis-promisfy.promisfy';
+import * as RedisPromisfy from './../redisPromise/redis-promisfy.promisfy';
 import { CreateProductDto } from './dto/create-product-dto';
 import { IProduct } from './product.interface';
 import { CategoryService } from './../category/category.service';
@@ -12,7 +13,6 @@ import { v4 as uuid } from 'uuid';
 import async from 'async';
 
 import ICategory from 'src/category/category.interface';
-import { TABLE_NAMES } from 'src/tableNames/names.table';
 
 
 @Injectable()
@@ -167,7 +167,7 @@ export class ProductService {
     public async getProductById(id: string): Promise<IProduct> {
         let foundProduct: IProduct = null;
         const productString = await RedisPromisfy.getItemByKey(this.provider, TABLE_NAMES.PRODUCTS, id);
-        if (productString !== "" && productString !== "nill") foundProduct = JSON.parse(productString);
+        if (productString !== "" && productString !== "null") foundProduct = JSON.parse(productString);
         return foundProduct
     }
 

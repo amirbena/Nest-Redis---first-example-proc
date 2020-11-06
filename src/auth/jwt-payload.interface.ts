@@ -1,5 +1,7 @@
+import { Role } from "../enums/enums";
+
 export class JwtPayload {
     email: string;
     password: string;
-    isAdmin: boolean
+    role: Role;
 }

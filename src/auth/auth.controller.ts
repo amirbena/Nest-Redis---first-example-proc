@@ -3,7 +3,6 @@ import { Response } from 'express';
 import { CreateUserDto } from './../user/dto/create-user';
 import { AuthService } from './auth.service';
 import { Controller, Logger, Post, Body, Res, HttpStatus, UsePipes, ValidationPipe } from '@nestjs/common';
-import { PassportStrategy } from '@nestjs/passport';
 
 @Controller('auth')
 export class AuthController {
@@ -14,7 +13,6 @@ export class AuthController {
     ) { }
 
     @Post("signup")
-
     @UsePipes(ValidationPipe)
     public async signup(
         @Body() createUserDto: CreateUserDto,

@@ -1,7 +1,5 @@
-import { AdminStartegy } from './../adminStrategy';
-import { JwtStartegy } from './../jwtStrategy';
 import { UserModule } from './../user/user.module';
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport'
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
@@ -10,6 +8,7 @@ import * as config from 'config';
 
 const jwtConfig= config.get('jwt');
 
+@Global()
 @Module({
   imports: [
     UserModule,
@@ -22,7 +21,7 @@ const jwtConfig= config.get('jwt');
     })
 
   ],
-  providers: [AuthService,JwtStartegy,AdminStartegy],
+  providers: [AuthService],
   controllers: [AuthController],
   exports: [AuthService]
 })

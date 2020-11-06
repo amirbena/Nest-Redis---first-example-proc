@@ -7,10 +7,11 @@ import { ProductService } from './product.service';
 import { Controller, Logger, Get, Post, UsePipes, ValidationPipe, HttpCode, HttpStatus, Body, Res, Patch, Param, Delete, UseGuards } from '@nestjs/common';
 import { IProduct } from './product.interface';
 import { IDetailedProduct } from './product.detailed.interface';
-import { AuthGuard } from '@nestjs/passport';
+import { RolesAuthGuard } from '../guards/authGuard.guard';
+import { Role } from '../enums/enums';
 
 @Controller('products')
-@UseGuards(AuthGuard("jwt"))
+@UseGuards(new RolesAuthGuard(Role.USER))
 export class ProductController {
     private logger: Logger = new Logger("ProductController");
     constructor(
@@ -25,7 +26,7 @@ export class ProductController {
 
     @Post()
     @UsePipes(ConvertProductPriceForUnit, ValidationPipe)
-    @UseGuards(AuthGuard("admin"))
+    @UseGuards(new RolesAuthGuard(Role.ADMIN))
     @HttpCode(HttpStatus.CREATED)
     async createProduct(
         @Body() createProductDto: CreateProductDto,
@@ -58,7 +59,7 @@ export class ProductController {
     }
 
     @Patch("/:id")
-    @UseGuards(AuthGuard("admin"))
+    @UseGuards(new RolesAuthGuard(Role.ADMIN))
     async updateProduct(
         @Param("id") id: string,
         @Body() updateProductDto: UpdateProductDto,
@@ -82,7 +83,7 @@ export class ProductController {
     }
 
     @Delete()
-    @UseGuards(AuthGuard("admin"))
+    @UseGuards(new RolesAuthGuard(Role.ADMIN))
     async deleteProductsByIds(
         @Body("ids") ids: string[]
     ) {

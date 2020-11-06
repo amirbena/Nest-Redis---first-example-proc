@@ -2,8 +2,10 @@ import {
     IsString, MinLength, MaxLength,
     IsObject, IsEmail, IsNumber, Min, Max, IsNumberString,
     IsBooleanString,
-    IsOptional
+    IsOptional,
+    IsIn
 } from 'class-validator';
+import { Role } from 'src/enums/enums';
 
 class AddressDto {
     @IsOptional()
@@ -54,9 +56,11 @@ export class UpdateUserDto {
     @IsObject()
     address: AddressDto
 
+
     @IsOptional()
-    @IsBooleanString()
-    isAdmin: string;
+    @IsIn([Role.USER, Role.MODERATOR, Role.ADMIN, Role.SUPER_ADMIN])
+
+    role: Role;
 
 
 

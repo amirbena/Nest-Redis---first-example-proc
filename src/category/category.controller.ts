@@ -1,28 +1,32 @@
+
 import { CreateCategoryDto } from './dto/category-insert';
 import { CategoryService } from './category.service';
-import { Response } from 'express';
-import { Controller, Get, Post, UsePipes, ValidationPipe, Body, HttpCode, HttpStatus, Logger, Res, Param, Patch, Delete, UseGuards } from '@nestjs/common';
+import {  Response } from 'express';
+import { Controller, Get, Post, UsePipes, ValidationPipe, Body, HttpCode, HttpStatus, Logger, Res, Param, Patch, Delete, UseGuards, Req, Inject } from '@nestjs/common';
 import ICategory from './category.interface';
 import { CategoryAmountPipe } from 'src/pipes/convert-category-pipe.pipe';
 import { UpdateCategoryDto } from './dto/category-update';
-import { AuthGuard } from '@nestjs/passport';
+import { RolesAuthGuard } from 'src/guards/authGuard.guard';
+import { Role } from 'src/enums/enums';
 
 
+
+@UseGuards(new RolesAuthGuard(Role.USER))
 @Controller('categories')
-@UseGuards(AuthGuard('jwt'))
 export class CategoryController {
     private logger = new Logger("CategoryController");
     constructor(
         private categoryService: CategoryService,
+
     ) { }
 
     @Get()
-    async GetCategories(): Promise<Record<string, ICategory>[]> {
+    async GetCategories(@Req() request: any): Promise<Record<string, ICategory>[]> {
+        this.logger.log(request.decodedHttp)
         return this.categoryService.getCategories()
     }
 
     @Post()
-    @UseGuards(AuthGuard("admin"))
     @UsePipes(CategoryAmountPipe, ValidationPipe)
     @HttpCode(HttpStatus.CREATED)
     async createCategory(
@@ -38,6 +42,7 @@ export class CategoryController {
     }
 
     @Get("/:id")
+    @UseGuards(new RolesAuthGuard(Role.USER))
     async getCategoryById(
         @Param('id') id: string,
         @Res() res: Response
@@ -49,7 +54,7 @@ export class CategoryController {
     }
 
     @Patch('/:id')
-    @UseGuards(AuthGuard("admin"))
+    @UseGuards(new RolesAuthGuard(Role.ADMIN))
     @UsePipes(CategoryAmountPipe, ValidationPipe)
     async updateCategoryById(
         @Param('id') id: string,
@@ -64,7 +69,7 @@ export class CategoryController {
 
 
     @Delete('ids/:ids')
-    @UseGuards(AuthGuard("admin"))
+    @UseGuards(new RolesAuthGuard(Role.ADMIN))
     async DeleteCategoriesByIds(
         @Body('ids') ids: string[],
         @Res() res: Response
@@ -76,6 +81,7 @@ export class CategoryController {
     }
 
     @Delete("names/:names")
+    @UseGuards(new RolesAuthGuard(Role.ADMIN))
     async DeleteCategoriesByNames(
         @Body('names') names: string[],
         @Res() res: Response

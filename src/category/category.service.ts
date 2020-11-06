@@ -1,3 +1,4 @@
+import { TABLE_NAMES } from './../enums/enums';
 import { UpdateCategoryDto } from './dto/category-update';
 import { Injectable, Logger } from '@nestjs/common';
 import { RedisService } from 'nestjs-redis';
@@ -8,8 +9,9 @@ import * as async from 'async';
 import { v4 as uuid, } from 'uuid';
 import CategoryInterface from './category.interface';
 import { CreateCategoryDto } from './dto/category-insert'
-import { RedisPromisfy } from '../redisPromise/redis-promisfy.promisfy';
-import { TABLE_NAMES } from 'src/tableNames/names.table';
+import * as RedisPromisfy from '../redisPromise/redis-promisfy.promisfy';
+
+
 
 @Injectable()
 export class CategoryService {

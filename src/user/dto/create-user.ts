@@ -53,9 +53,6 @@ export class CreateUserDto {
     @IsObject()
     address: AddressDto
 
-    @IsNotEmpty()
-    @IsBooleanString()
-    isAdmin: string;
 
 
 
