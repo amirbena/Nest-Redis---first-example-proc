@@ -1,11 +1,11 @@
 import { IUserShow, IUserAdminShow } from './user.interface';
 
 import { RolesAuthGuard } from './../guards/authGuard.guard';
-import { Response } from 'express';
-import { Controller, UseGuards, Logger, Get, Patch, Param, Body, Res, HttpStatus, Delete, Req } from '@nestjs/common';
+import { Controller, UseGuards, Logger, Get, Patch, Param, Body,  Delete, Req, ValidationPipe, UsePipes } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/user-upadte';
 import { Role } from 'src/enums/enums';
+import { ChangeRoleDto } from './dto/change-role';
 
 @Controller('users')
 
@@ -24,12 +24,11 @@ export class UserController {
     @Get("ExceptAdmin")
     @UseGuards(new RolesAuthGuard(Role.ADMIN))
     public async getAllExceptAdmin(
-        @Req() req: any,
-        @Res() res: Response
+        @Req() req: any
     ) {
         const { decodedHttp } = req;
         const allUsers = await this.userService.getAllUsersExceptCurrent(decodedHttp.email);
-        res.send(allUsers);
+        return allUsers;
     }
 
 
@@ -37,23 +36,20 @@ export class UserController {
     @UseGuards(new RolesAuthGuard(Role.ADMIN))
     public async updateUser(
         @Param('id') id: string,
-        @Body() updateUserDto: UpdateUserDto,
-        @Res() res: Response
+        @Body() updateUserDto: UpdateUserDto
     ) {
         const result = await this.userService.updateUserDetails(id, updateUserDto);
-        if (result === "Can't update something that not exists") return res.status(HttpStatus.NOT_FOUND).send(result);
-        res.send(result);
+        return `User Updated: ${result}`;
     }
 
-    @Patch("makeSuperAdmin/:id")
+    @Patch("changeRole")
     @UseGuards(new RolesAuthGuard(Role.SUPER_ADMIN))
-    public async makeSuperAdmin(
-        @Param("id") id: string,
-        @Res() response: Response
-    ) {
-        const result = await this.userService.makeUserAsSuperAdmin(id);
-        if (result === "User is not found") response.status(HttpStatus.NOT_FOUND).send(result);
-        return response.send("User is made to admin");
+    @UsePipes(ValidationPipe)
+    public async changeRole(
+        @Body() changeRoleDto: ChangeRoleDto
+    ): Promise<boolean> {
+        const result = await this.userService.changeRoleToUser(changeRoleDto);
+        return result;
     }
 
     @Delete('/:id')

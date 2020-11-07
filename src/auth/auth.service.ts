@@ -2,7 +2,7 @@ import { AuthCrediantls } from './dto/auth-credantials';
 import { JwtPayload } from './jwt-payload.interface';
 import { CreateUserDto } from './../user/dto/create-user';
 import { UserService } from './../user/user.service';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt'
 import * as bcrypt from 'bcrypt';
 import { Role } from 'src/enums/enums';
@@ -17,7 +17,6 @@ export class AuthService {
 
     public async signup(createUserDto: CreateUserDto): Promise<string> {
         const result = await this.userService.createUser(createUserDto);
-        if (result === "Email is exist for other user") return result;
         const payload: JwtPayload = {
             email: createUserDto.email,
             password: result,
@@ -36,9 +35,9 @@ export class AuthService {
         Promise<string> {
         const { email, password } = authCrediantls;
         const user = await this.userService.getUserByEmail(email);
-        if (!user) return "email not found";
+        if (!user) throw new NotFoundException("Email not found for user");
         const res = await bcrypt.compare(password, user.password);
-        if (!res) return "failed to authienticate";
+        if (!res) throw new UnauthorizedException("failed to authienticate");
         const payload: JwtPayload = {
             email,
             password: user.password,
@@ -47,10 +46,5 @@ export class AuthService {
 
         return await this.genToken(payload);
 
-    }
-
-    public decodeJwt(token: string): JwtPayload {
-        const decode: JwtPayload = this.jwtService.verify(token)
-        return decode;
     }
 }

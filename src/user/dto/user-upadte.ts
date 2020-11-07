@@ -58,9 +58,9 @@ export class UpdateUserDto {
 
 
     @IsOptional()
-    @IsIn([Role.USER, Role.MODERATOR, Role.ADMIN, Role.SUPER_ADMIN])
+    @IsIn(["MODERATOR", "USER", "ADMIN", "SUPER_ADMIN"])
 
-    role: Role;
+    role: string;
 
 
 

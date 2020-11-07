@@ -1,8 +1,7 @@
 
 import { CreateCategoryDto } from './dto/category-insert';
 import { CategoryService } from './category.service';
-import {  Response } from 'express';
-import { Controller, Get, Post, UsePipes, ValidationPipe, Body, HttpCode, HttpStatus, Logger, Res, Param, Patch, Delete, UseGuards, Req, Inject } from '@nestjs/common';
+import { Controller, Get, Post, UsePipes, ValidationPipe, Body,  Logger,  Param, Patch, Delete, UseGuards, NotFoundException } from '@nestjs/common';
 import ICategory from './category.interface';
 import { CategoryAmountPipe } from 'src/pipes/convert-category-pipe.pipe';
 import { UpdateCategoryDto } from './dto/category-update';
@@ -21,36 +20,27 @@ export class CategoryController {
     ) { }
 
     @Get()
-    async GetCategories(@Req() request: any): Promise<Record<string, ICategory>[]> {
-        this.logger.log(request.decodedHttp)
+    async GetCategories(): Promise<Record<string, ICategory>[]> {
         return this.categoryService.getCategories()
     }
 
     @Post()
     @UsePipes(CategoryAmountPipe, ValidationPipe)
-    @HttpCode(HttpStatus.CREATED)
     async createCategory(
-
         @Body() createCategoryDto: CreateCategoryDto,
-        @Res() res: Response
     ) {
         this.logger.log(createCategoryDto.categoryName);
         const result = await this.categoryService.createCategory(createCategoryDto);
-        if (result === "Same category Name") return res.status(HttpStatus.CONFLICT).send(result);
-        this.logger.log(result);
-        return res.status(HttpStatus.CREATED).send("Item created");
+        return "Category Created";
     }
 
     @Get("/:id")
     @UseGuards(new RolesAuthGuard(Role.USER))
     async getCategoryById(
         @Param('id') id: string,
-        @Res() res: Response
-    ): Promise<Response<ICategory>> {
-        this.logger.log(id)
+    ): Promise<ICategory> {
         const result = await this.categoryService.getCategoryById(id);
-        if (!result) return res.status(HttpStatus.NOT_FOUND).send("No Category Found");
-        return res.send(result);
+        return result
     }
 
     @Patch('/:id')
@@ -59,35 +49,29 @@ export class CategoryController {
     async updateCategoryById(
         @Param('id') id: string,
         @Body() updateCategoryDto: UpdateCategoryDto,
-        @Res() res: Response
-    ): Promise<Response<string>> {
-        this.logger.log("Update category dto")
+    ): Promise<string> {
         const result = await this.categoryService.updateCategory(id, updateCategoryDto);
-        if (result === "Can't update something that not exists") res.status(HttpStatus.NOT_FOUND).send(result);
-        return res.send(`${id} isUpdated : ${result}`);
+        return `${id} isUpdated : ${result}`
     }
 
 
     @Delete('ids/:ids')
     @UseGuards(new RolesAuthGuard(Role.ADMIN))
     async DeleteCategoriesByIds(
-        @Body('ids') ids: string[],
-        @Res() res: Response
-    ): Promise<Response<string>> {
-        this.logger.log(ids);
+        @Body('ids') ids: string[]
+    ): Promise<string> {
         const result = await this.categoryService.deleteCategoriesByIds(ids);
-        if (!result) return res.status(HttpStatus.NOT_FOUND).send("Something failed in deleting id");
-        return res.send("Delete all succeed");
+        if (!result) throw new NotFoundException("Something failed in deleting id");
+        return "Delete all succeed";
     }
 
     @Delete("names/:names")
     @UseGuards(new RolesAuthGuard(Role.ADMIN))
     async DeleteCategoriesByNames(
         @Body('names') names: string[],
-        @Res() res: Response
-    ): Promise<Response<string>> {
+    ): Promise<string> {
         const result = await this.categoryService.deleteCategoriesByNames(names);
-        if (!result) return res.status(HttpStatus.NOT_FOUND).send("Something failed in deleting id");
-        return res.send("Delete all succeed");
+        if (!result) throw new NotFoundException("Something failed in deleting id");
+        return "Delete all succeed";
     }
 }

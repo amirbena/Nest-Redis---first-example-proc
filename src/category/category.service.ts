@@ -1,6 +1,6 @@
 import { TABLE_NAMES } from './../enums/enums';
 import { UpdateCategoryDto } from './dto/category-update';
-import { Injectable, Logger } from '@nestjs/common';
+import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { RedisService } from 'nestjs-redis';
 import * as config from 'config';
 import { Redis } from 'ioredis';
@@ -55,13 +55,13 @@ export class CategoryService {
         return isFound;
 
     }
-    public async createCategory(createCategoryDto: CreateCategoryDto): Promise<CreateCategoryDto | "Same category Name"> {
+    public async createCategory(createCategoryDto: CreateCategoryDto): Promise<CreateCategoryDto> {
         const { categoryName } = createCategoryDto;
         try {
             const id = uuid();
 
             const ifCategoryNameExists: boolean = await this.ifNameExistsInDB(categoryName);
-            if (ifCategoryNameExists) return "Same category Name";
+            if (ifCategoryNameExists) throw new ConflictException("Same category Name");
             const result = await RedisPromisfy.setOrInsertItemToDB(this.provider, TABLE_NAMES.CATEGORIES, id, createCategoryDto);
             if (result) {
                 return createCategoryDto;
@@ -131,13 +131,14 @@ export class CategoryService {
         if (categoryString !== "" && categoryString !== "nill") {
             category = JSON.parse(categoryString);
         }
+        if (category === null) throw new NotFoundException("No Category Found");
         return category;
     }
     public async updateCategory(id: string, updateCategoryDto: UpdateCategoryDto)
-        : Promise<boolean | "Can't update something that not exists"> {
+        : Promise<boolean> {
 
         const exists = await RedisPromisfy.existsinHash(this.provider, TABLE_NAMES.CATEGORIES, id);
-        if (!exists) return "Can't update something that not exists"
+        if (!exists) throw new NotFoundException("Can't update something that not exists")
         const { items, keys } = await RedisPromisfy.getItemsAndKeys(this.provider, TABLE_NAMES.CATEGORIES)
         let status: boolean = false;
         await async.each(keys, async key => {

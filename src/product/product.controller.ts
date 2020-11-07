@@ -1,10 +1,9 @@
 import { UpdateProductDto } from './dto/update-category-dto';
-import { Response } from 'express';
 import { CreateProductDto } from './dto/create-product-dto';
 import { ConvertProductPriceForUnit } from './../pipes/convert-product-pipe.pipe';
 import { ProductService } from './product.service';
 
-import { Controller, Logger, Get, Post, UsePipes, ValidationPipe, HttpCode, HttpStatus, Body, Res, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Logger, Get, Post, UsePipes, ValidationPipe, HttpCode, HttpStatus, Body,  Patch, Param, Delete, UseGuards } from '@nestjs/common';
 import { IProduct } from './product.interface';
 import { IDetailedProduct } from './product.detailed.interface';
 import { RolesAuthGuard } from '../guards/authGuard.guard';
@@ -30,26 +29,9 @@ export class ProductController {
     @HttpCode(HttpStatus.CREATED)
     async createProduct(
         @Body() createProductDto: CreateProductDto,
-        @Res() res: Response
-    ): Promise<Response<string>> {
+    ): Promise<string> {
         const result = await this.productService.createProduct(createProductDto);
-        switch (result) {
-            case "Same product in same category":
-                res = res.status(HttpStatus.CONFLICT);
-                break;
-
-            case "Category isn't found into DB":
-                res = res.status(HttpStatus.NOT_FOUND);
-                break;
-
-            case "Amount of entered category is bigger than capcity amount":
-                res = res.status(HttpStatus.NOT_ACCEPTABLE);
-            default:
-                return res.status(HttpStatus.CREATED).send("Product added successfully");
-
-        }
-        return res.send(result);
-
+        return "Prdouct Added Successfully";
     }
 
 
@@ -63,23 +45,9 @@ export class ProductController {
     async updateProduct(
         @Param("id") id: string,
         @Body() updateProductDto: UpdateProductDto,
-        @Res() res: Response
-    ) {
+    ): Promise<string> {
         const result = await this.productService.updateProduct(id, updateProductDto);
-        switch (result) {
-            case "Can't update something that not exists":
-            case "Category Is not Found":
-                res = res.status(HttpStatus.NOT_FOUND)
-                break;
-            case "Can't update- change amount":
-                res = res.status(HttpStatus.NOT_ACCEPTABLE);
-                break;
-            default:
-                return res.send(`Product updated`);
-
-
-        }
-        return res.send(result);
+        return `Product updated successfully: ${result}`;
     }
 
     @Delete()
@@ -93,11 +61,9 @@ export class ProductController {
     @Get('/:id')
     async getProductById(
         @Param("id") id: string,
-        @Res() res: Response
-    ) {
+    ): Promise<IProduct> {
         const product = await this.productService.getProductById(id);
-        if (!product) return res.status(HttpStatus.NOT_FOUND).send("Product not found by ID");
-        res.send(product);
+        return product;
     }
 
 }

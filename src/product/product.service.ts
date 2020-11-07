@@ -5,7 +5,7 @@ import * as RedisPromisfy from './../redisPromise/redis-promisfy.promisfy';
 import { CreateProductDto } from './dto/create-product-dto';
 import { IProduct } from './product.interface';
 import { CategoryService } from './../category/category.service';
-import { Injectable, Logger } from '@nestjs/common';
+import { ConflictException, Injectable, Logger, NotAcceptableException, NotFoundException } from '@nestjs/common';
 import { Redis } from 'ioredis';
 import { RedisService } from 'nestjs-redis';
 import * as config from 'config';
@@ -68,22 +68,22 @@ export class ProductService {
         })
         return newItems;
     }
-    public async createProduct(createProductDto: CreateProductDto): Promise<IProduct | "Category isn't found into DB"
-        | "Same product in same category" | "Amount of entered category is bigger than capcity amount"> {
+    public async createProduct(createProductDto: CreateProductDto): Promise<IProduct> {
 
 
         const { categoryName, priceForUnit, productName, amountToStoreInKg } = createProductDto;
         const categoryObj = await this.categoryService.getCategoryObjByName(categoryName);
 
-        if (!categoryObj) { await this.destroyAllNotAssociatedProudcts(); return "Category isn't found into DB"; }
+        if (!categoryObj) { await this.destroyAllNotAssociatedProudcts(); throw new NotFoundException("Category isn't found into DB"); }
 
         const categoryId = Object.keys(categoryObj)[0];
         const foundCategory = categoryObj[categoryId];
 
 
         const isFound = await this.isProductHasFoundIntoDB(productName, categoryId);
-        if (isFound) return "Same product in same category";
-        if (foundCategory.amountToStoreInKg < amountToStoreInKg) return "Amount of entered category is bigger than capcity amount"
+        if (isFound) throw new ConflictException("Same product in same category");
+        if (foundCategory.amountToStoreInKg < amountToStoreInKg)
+            throw new NotAcceptableException("Amount of entered category is bigger than capcity amount")
         const id = uuid();
         const product: IProduct = {
             name: productName,
@@ -131,13 +131,10 @@ export class ProductService {
         return products;
     }
 
-    public async updateProduct(id: string, updateProductDto: UpdateProductDto): Promise<string | boolean> {
+    public async updateProduct(id: string, updateProductDto: UpdateProductDto): Promise<boolean> {
         const exists = await RedisPromisfy.existsinHash(this.provider, TABLE_NAMES.PRODUCTS, id);
-        if (!exists) return "Can't update something that not exists";
-        let textFailure = "";
+        if (!exists) throw new NotFoundException("Can't update something that not exists");
         const itemsAndKeys = await RedisPromisfy.getItemsAndKeys(this.provider, TABLE_NAMES.PRODUCTS)
-        this.logger.log(id);
-        this.logger.log(updateProductDto);
         let status: boolean = false;
         await async.each(itemsAndKeys.keys, async key => {
             if (key === id) {
@@ -145,10 +142,10 @@ export class ProductService {
                 const category: ICategory = await this.categoryService.getCategoryById(product.categoryId);
                 if (!category) {
                     itemsAndKeys.items = await this.destroyAllNotAssociatedProudcts(itemsAndKeys.items, itemsAndKeys.keys);
-                    textFailure = "Category Is not Found"; return
+                    throw new NotFoundException("Category Is not Found");
                 }
                 const { amountToStoreInKg, priceForUnit, productName } = updateProductDto;
-                if (amountToStoreInKg && amountToStoreInKg > product.amountToStoreInKg) { textFailure = "Can't update- change amount"; return; }
+                if (amountToStoreInKg && amountToStoreInKg > product.amountToStoreInKg) { throw new NotAcceptableException("Can't update- change amount"); }
                 else {
                     product.amountToStoreInKg = amountToStoreInKg;
                     category.amountToStoreInKg -= amountToStoreInKg;
@@ -161,13 +158,14 @@ export class ProductService {
                 return
             }
         })
-        return textFailure !== "" ? textFailure : status
+        return status;
     }
 
     public async getProductById(id: string): Promise<IProduct> {
         let foundProduct: IProduct = null;
         const productString = await RedisPromisfy.getItemByKey(this.provider, TABLE_NAMES.PRODUCTS, id);
         if (productString !== "" && productString !== "null") foundProduct = JSON.parse(productString);
+        if (foundProduct === null) throw new NotFoundException("Product not found by ID");
         return foundProduct
     }
 

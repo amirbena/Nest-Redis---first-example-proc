@@ -1,3 +1,4 @@
+import { ChangeRoleDto } from './dto/change-role';
 
 import { UpdateUserDto } from './dto/user-upadte';
 import { IUser, IUserShow, IUserAdminShow } from './user.interface';
@@ -6,7 +7,7 @@ import { CreateUserDto } from './dto/create-user';
 import { RedisService } from 'nestjs-redis';
 import { Redis } from 'ioredis';
 import * as async from "async";
-import { Injectable, Logger } from '@nestjs/common';
+import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import * as config from 'config';
 import { v4 as uuid } from "uuid";
 import * as bcrypt from 'bcrypt';
@@ -35,7 +36,7 @@ export class UserService {
             const user: IUser = JSON.parse(item);
             if (user.email === email) { found = true; return; }
         })
-        if (found) return "Email is exist for other user";
+        if (found) throw new ConflictException("Email is exist for other user");
         const salt = await bcrypt.genSalt();
         const password = await bcrypt.hash(createUserDto.password, salt);
         const user: IUser = {
@@ -66,10 +67,10 @@ export class UserService {
     public async getAllUsers(): Promise<Record<string, IUserShow>[]> {
         const { items, keys } = await RedisPromisfy.getItemsAndKeys(this.provider, TABLE_NAMES.USERS);
 
-        
+
         const users: Record<string, IUser>[] = await async.map(keys, async key => {
             const user: IUser = JSON.parse(items[key]);
-            
+
             const userShow: IUserShow = {
                 address: user.address,
                 email: user.email,
@@ -82,9 +83,9 @@ export class UserService {
         return users;
     }
 
-    public async updateUserDetails(id: string, updateUserDto: UpdateUserDto): Promise<string | boolean> {
+    public async updateUserDetails(id: string, updateUserDto: UpdateUserDto): Promise<boolean> {
         const exists = await RedisPromisfy.existsinHash(this.provider, TABLE_NAMES.USERS, id);
-        if (!exists) return "Can't update something that not exists";
+        if (!exists) throw new NotFoundException("Can't update something that not exists");
         let textFailure = "";
         const { keys, items } = await RedisPromisfy.getItemsAndKeys(this.provider, TABLE_NAMES.USERS)
 
@@ -92,14 +93,18 @@ export class UserService {
         await async.each(keys, async key => {
             if (key === id) {
                 let user: IUser = JSON.parse(items[key]);
-                for (let key in Object.keys(updateUserDto)) {
+                for (let key in items) {
+                    if (key === "role") {
+                        user[key] = Role[updateUserDto["role"]];
+                        continue;
+                    }
                     user[key] = updateUserDto[key];
                 }
                 status = await RedisPromisfy.setOrInsertItemToDB(this.provider, TABLE_NAMES.USERS, id, user);
                 return
             }
         })
-        return textFailure !== "" ? textFailure : status
+        return status;
     }
 
     public async getAllUsersExceptCurrent(email: string): Promise<Record<string, IUserAdminShow>[]> {
@@ -107,7 +112,7 @@ export class UserService {
         const users: Record<string, IUserAdminShow>[] = [];
         this.logger.log(items);
 
-        keys.forEach(key=>{
+        keys.forEach(key => {
             const user: IUser = JSON.parse(items[key]);
             const userShow: IUserAdminShow = {
                 address: user.address,
@@ -128,11 +133,14 @@ export class UserService {
         return await RedisPromisfy.deleteItemsAccordingHashName(this.provider, TABLE_NAMES.USERS, ids);
     }
 
-    public async makeUserAsSuperAdmin(id: string): Promise<"User is not found" | boolean> {
+
+    public async changeRoleToUser(changeRoleDto: ChangeRoleDto): Promise<boolean> {
+        const { id, role } = changeRoleDto;
         const userStr = await RedisPromisfy.getItemByKey(this.provider, TABLE_NAMES.USERS, id);
         const user: IUser = JSON.parse(userStr);
-        if (!user) return "User is not found";
-        user.role = Role.SUPER_ADMIN;
+        if (!user) throw new NotFoundException("User not found into db")
+        const destRole: Role = Role[role];
+        user.role = destRole;
         return await RedisPromisfy.setOrInsertItemToDB(this.provider, TABLE_NAMES.USERS, id, user);
     }
 }
