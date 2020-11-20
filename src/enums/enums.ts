@@ -5,15 +5,16 @@ export enum Role {
     SUPER_ADMIN = 3
 }
 
-export const RoleString={
-      0: "MODERATOR",
-      1: "USER",
-      2: "ADMIN",
-      3: "SUPER_ADMIN"
+export const RoleString = {
+    0: "MODERATOR",
+    1: "USER",
+    2: "ADMIN",
+    3: "SUPER_ADMIN"
 }
 
 export enum TABLE_NAMES {
     USERS = "users",
     CATEGORIES = "categories",
-    PRODUCTS = "products"
+    PRODUCTS = "products",
+    ORDERS = "orders"
 }

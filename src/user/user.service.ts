@@ -63,7 +63,21 @@ export class UserService {
         })
         return foundUser;
     }
-
+    public async getUserIdByEmail(email: string) {
+        let foundId: string = "";
+        const { items, keys } = await RedisPromisfy
+            .getItemsAndKeys(this.provider, TABLE_NAMES.USERS)
+        keys.forEach(key => {
+            const user: IUser = JSON.parse(items[key]);
+            if (user.email === email) {
+                foundId = key;
+                return;
+            }
+        })
+        if (foundId === "")
+            throw new NotFoundException("User name is not found into DB")
+        return foundId;
+    }
     public async getAllUsers(): Promise<Record<string, IUserShow>[]> {
         const { items, keys } = await RedisPromisfy.getItemsAndKeys(this.provider, TABLE_NAMES.USERS);
 
