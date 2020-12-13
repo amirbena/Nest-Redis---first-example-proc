@@ -1,3 +1,5 @@
+import { RolesGuard } from '../guards/roles-guard.guard';
+import { Roles } from '../decorators/roles.decorator';
 
 import { CreateCategoryDto } from './dto/category-insert';
 import { CategoryService } from './category.service';
@@ -5,12 +7,12 @@ import { Controller, Get, Post, UsePipes, ValidationPipe, Body,  Logger,  Param,
 import ICategory from './category.interface';
 import { CategoryAmountPipe } from 'src/pipes/convert-category-pipe.pipe';
 import { UpdateCategoryDto } from './dto/category-update';
-import { RolesAuthGuard } from 'src/guards/authGuard.guard';
 import { Role } from 'src/enums/enums';
+import { AuthGuard } from '@nestjs/passport';
 
 
 
-@UseGuards(new RolesAuthGuard(Role.USER))
+@UseGuards(AuthGuard("jwt"))
 @Controller('categories')
 export class CategoryController {
     private logger = new Logger("CategoryController");
@@ -26,6 +28,8 @@ export class CategoryController {
 
     @Post()
     @UsePipes(CategoryAmountPipe, ValidationPipe)
+    @Roles(Role.ADMIN)
+    @UseGuards(RolesGuard)
     async createCategory(
         @Body() createCategoryDto: CreateCategoryDto,
     ) {
@@ -35,7 +39,8 @@ export class CategoryController {
     }
 
     @Get("/:id")
-    @UseGuards(new RolesAuthGuard(Role.USER))
+    @Roles(Role.ADMIN)
+    @UseGuards(RolesGuard)
     async getCategoryById(
         @Param('id') id: string,
     ): Promise<ICategory> {
@@ -44,7 +49,8 @@ export class CategoryController {
     }
 
     @Patch('/:id')
-    @UseGuards(new RolesAuthGuard(Role.ADMIN))
+    @Roles(Role.ADMIN)
+    @UseGuards(RolesGuard)
     @UsePipes(CategoryAmountPipe, ValidationPipe)
     async updateCategoryById(
         @Param('id') id: string,
@@ -56,7 +62,8 @@ export class CategoryController {
 
 
     @Delete('ids/:ids')
-    @UseGuards(new RolesAuthGuard(Role.ADMIN))
+    @Roles(Role.ADMIN)
+    @UseGuards(RolesGuard)
     async DeleteCategoriesByIds(
         @Body('ids') ids: string[]
     ): Promise<string> {
@@ -66,7 +73,8 @@ export class CategoryController {
     }
 
     @Delete("names/:names")
-    @UseGuards(new RolesAuthGuard(Role.ADMIN))
+    @Roles(Role.ADMIN)
+    @UseGuards(RolesGuard)
     async DeleteCategoriesByNames(
         @Body('names') names: string[],
     ): Promise<string> {

@@ -1,16 +1,17 @@
+import { AuthGuard } from './../decorators/auth-guard.guard';
 import { UpdateProductDto } from './dto/update-category-dto';
 import { CreateProductDto } from './dto/create-product-dto';
 import { ConvertProductPriceForUnit } from './../pipes/convert-product-pipe.pipe';
 import { ProductService } from './product.service';
-
 import { Controller, Logger, Get, Post, UsePipes, ValidationPipe, HttpCode, HttpStatus, Body,  Patch, Param, Delete, UseGuards } from '@nestjs/common';
 import { IProduct } from './product.interface';
 import { IDetailedProduct } from './product.detailed.interface';
-import { RolesAuthGuard } from '../guards/authGuard.guard';
 import { Role } from '../enums/enums';
+import { Roles } from 'src/decorators/roles.decorator'
+import { RolesGuard } from 'src/guards/roles-guard.guard';
 
 @Controller('products')
-@UseGuards(new RolesAuthGuard(Role.USER))
+@UseGuards(AuthGuard)
 export class ProductController {
     private logger: Logger = new Logger("ProductController");
     constructor(
@@ -25,7 +26,8 @@ export class ProductController {
 
     @Post()
     @UsePipes(ConvertProductPriceForUnit, ValidationPipe)
-    @UseGuards(new RolesAuthGuard(Role.ADMIN))
+    @Roles(Role.ADMIN)
+    @UseGuards(RolesGuard)
     @HttpCode(HttpStatus.CREATED)
     async createProduct(
         @Body() createProductDto: CreateProductDto,
@@ -41,7 +43,8 @@ export class ProductController {
     }
 
     @Patch("/:id")
-    @UseGuards(new RolesAuthGuard(Role.ADMIN))
+    @Roles(Role.ADMIN)
+    @UseGuards(RolesGuard)
     async updateProduct(
         @Param("id") id: string,
         @Body() updateProductDto: UpdateProductDto,
@@ -51,7 +54,8 @@ export class ProductController {
     }
 
     @Delete()
-    @UseGuards(new RolesAuthGuard(Role.ADMIN))
+    @Roles(Role.ADMIN)
+    @UseGuards(RolesGuard)
     async deleteProductsByIds(
         @Body("ids") ids: string[]
     ) {
@@ -59,6 +63,8 @@ export class ProductController {
     }
 
     @Get('/:id')
+    @Roles(Role.USER)
+    @UseGuards(RolesGuard)
     async getProductById(
         @Param("id") id: string,
     ): Promise<IProduct> {

@@ -47,4 +47,10 @@ export class AuthService {
         return await this.genToken(payload);
 
     }
+
+    public getToken(token: string): JwtPayload {
+        const payload: JwtPayload = this.jwtService.verify(token);
+        return payload;
+    }
+
 }

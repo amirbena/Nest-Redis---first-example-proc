@@ -1,11 +1,12 @@
+import { RolesGuard } from '../guards/roles-guard.guard';
 import { IUserShow, IUserAdminShow } from './user.interface';
-
-import { RolesAuthGuard } from './../guards/authGuard.guard';
-import { Controller, UseGuards, Logger, Get, Patch, Param, Body,  Delete, Req, ValidationPipe, UsePipes } from '@nestjs/common';
+import { Controller, UseGuards, Logger, Get, Patch, Param, Body, Delete, Req, ValidationPipe, UsePipes, Query } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/user-upadte';
 import { Role } from 'src/enums/enums';
 import { ChangeRoleDto } from './dto/change-role';
+import { Roles } from 'src/decorators/roles.decorator';
+import { JwtPayload } from 'src/auth/jwt-payload.interface';
 
 @Controller('users')
 
@@ -22,18 +23,19 @@ export class UserController {
 
 
     @Get("ExceptAdmin")
-    @UseGuards(new RolesAuthGuard(Role.ADMIN))
+    @Roles(Role.ADMIN)
+    @UseGuards(RolesGuard)
     public async getAllExceptAdmin(
-        @Req() req: any
+        @Query("user") userToken: JwtPayload
     ) {
-        const { decodedHttp } = req;
-        const allUsers = await this.userService.getAllUsersExceptCurrent(decodedHttp.email);
+        const allUsers = await this.userService.getAllUsersExceptCurrent(userToken.email);
         return allUsers;
     }
 
 
     @Patch('/:id')
-    @UseGuards(new RolesAuthGuard(Role.ADMIN))
+    @Roles(Role.ADMIN)
+    @UseGuards(RolesGuard)
     public async updateUser(
         @Param('id') id: string,
         @Body() updateUserDto: UpdateUserDto
@@ -43,8 +45,9 @@ export class UserController {
     }
 
     @Patch("changeRole")
-    @UseGuards(new RolesAuthGuard(Role.SUPER_ADMIN))
     @UsePipes(ValidationPipe)
+    @Roles(Role.SUPER_ADMIN)
+    @UseGuards(RolesGuard)
     public async changeRole(
         @Body() changeRoleDto: ChangeRoleDto
     ): Promise<boolean> {
@@ -53,7 +56,8 @@ export class UserController {
     }
 
     @Delete('/:id')
-    @UseGuards(new RolesAuthGuard(Role.SUPER_ADMIN))
+    @Roles(Role.SUPER_ADMIN)
+    @UseGuards(RolesGuard)
     public async deleteUser(
         @Param("id") id: string
     ) {

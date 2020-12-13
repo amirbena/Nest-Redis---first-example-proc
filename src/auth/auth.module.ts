@@ -3,10 +3,10 @@ import { Global, Module } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport'
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
-import { JwtModule} from '@nestjs/jwt';
+import { JwtModule } from '@nestjs/jwt';
 import * as config from 'config';
 
-const jwtConfig= config.get('jwt');
+const jwtConfig = config.get('jwt');
 
 @Global()
 @Module({
