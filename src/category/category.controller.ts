@@ -1,3 +1,4 @@
+import { AuthGuard } from './../guards/auth-guard.guard';
 import { RolesGuard } from '../guards/roles-guard.guard';
 import { Roles } from '../decorators/roles.decorator';
 
@@ -8,11 +9,11 @@ import ICategory from './category.interface';
 import { CategoryAmountPipe } from 'src/pipes/convert-category-pipe.pipe';
 import { UpdateCategoryDto } from './dto/category-update';
 import { Role } from 'src/enums/enums';
-import { AuthGuard } from '@nestjs/passport';
 
 
 
-@UseGuards(AuthGuard("jwt"))
+
+@UseGuards(AuthGuard)
 @Controller('categories')
 export class CategoryController {
     private logger = new Logger("CategoryController");

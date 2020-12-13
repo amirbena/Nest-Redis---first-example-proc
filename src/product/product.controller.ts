@@ -1,4 +1,4 @@
-import { AuthGuard } from './../decorators/auth-guard.guard';
+import { AuthGuard } from '../guards/auth-guard.guard';
 import { UpdateProductDto } from './dto/update-category-dto';
 import { CreateProductDto } from './dto/create-product-dto';
 import { ConvertProductPriceForUnit } from './../pipes/convert-product-pipe.pipe';

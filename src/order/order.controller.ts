@@ -1,6 +1,6 @@
+import { AuthGuard } from './../guards/auth-guard.guard';
 import { JwtPayload } from 'src/auth/jwt-payload.interface';
 import { Controller, HttpCode, Logger, Post, UseGuards, UsePipes, ValidationPipe, HttpStatus, Body, Req, SetMetadata, Query } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { Role } from 'src/enums/enums';
 import { ConvertOrderPipe } from 'src/pipes/convert-order-pipe.pipe';
 import { RolesGuard } from 'src/guards/roles-guard.guard';
@@ -9,7 +9,7 @@ import { CreateOrderDto } from './dto/create-order';
 import { OrderService } from './order.service';
 
 @Controller('orders')
-@UseGuards(AuthGuard("jwt"))
+@UseGuards(AuthGuard)
 export class OrderController {
     private logger: Logger = new Logger("OrdersController");
     constructor(

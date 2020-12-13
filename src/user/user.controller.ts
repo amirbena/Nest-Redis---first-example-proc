@@ -22,7 +22,7 @@ export class UserController {
     }
 
 
-    @Get("ExceptAdmin")
+    @Get("ExeceptAdmin")
     @Roles(Role.ADMIN)
     @UseGuards(RolesGuard)
     public async getAllExceptAdmin(
